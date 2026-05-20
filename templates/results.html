@@ -1,0 +1,445 @@
+{% extends "base.html" %}
+{% block title %}Field Assessment — Crop Sentry{% endblock %}
+
+{% block head_extra %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+{% endblock %}
+
+{% block content %}
+{# ═══════════════════════════════════════════════════════════════════
+   AERIAL STRIP — field photo header
+   ═══════════════════════════════════════════════════════════════ #}
+<section class="cs-hero" style="height:260px">
+  <img src="/static/img/photo-barn-rustic.png" alt="" class="cs-hero-photo" style="object-position:center 55%" />
+  <div class="cs-hero-overlay-v" style="background:linear-gradient(180deg,rgba(20,15,8,0.25) 0%,rgba(20,15,8,0.6) 100%)"></div>
+  <div style="position:absolute;left:32px;bottom:24px;color:var(--soil-paper);z-index:2">
+    <span class="cs-mono" style="font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:var(--amber-2)" id="aerialMeta">
+      &sect; FIELD ASSESSMENT
+    </span>
+    <h1 class="cs-display" style="font-size:clamp(28px,4vw,56px);margin:10px 0 0;color:var(--soil-paper);line-height:1.0" id="aerialPlace">
+      Loading&hellip;
+    </h1>
+  </div>
+  <div style="position:absolute;right:32px;bottom:24px;color:rgba(232,221,193,0.75);font-family:var(--f-mono);font-size:11px;letter-spacing:0.14em;text-align:right;text-transform:uppercase;z-index:2" id="aerialCoords"></div>
+</section>
+
+{# ═══════════════════════════════════════════════════════════════════
+   BACK LINK + META
+   ═══════════════════════════════════════════════════════════════ #}
+<section style="padding:20px 32px 0;display:flex;justify-content:space-between;align-items:center">
+  <a href="/" class="cs-mono" style="font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-2);text-decoration:none">&larr; NEW EVALUATION</a>
+  <div class="cs-mono" id="updatedAt" style="font-size:10.5px;color:var(--ink-3);letter-spacing:0.14em;text-transform:uppercase"></div>
+</section>
+
+{# ═══════════════════════════════════════════════════════════════════
+   DISCLAIMER
+   ═══════════════════════════════════════════════════════════════ #}
+<aside class="results-disclaimer" role="note" aria-label="Important disclaimer" style="margin:16px 32px 0;padding:12px 16px;background:var(--amber-soft);border:1px solid var(--amber);font-size:12px;color:var(--ink)">
+  <strong>Decision support, not professional advice.</strong>
+  Verify with a local agronomist or extension agent before acting.
+  <a href="/terms">Terms</a> &middot; <a href="/methodology">Methodology</a>
+</aside>
+
+{# ═══════════════════════════════════════════════════════════════════
+   LOADING + ERROR
+   ═══════════════════════════════════════════════════════════════ #}
+<section id="loading" class="loading" style="padding:80px 32px;text-align:center">
+  <div class="spinner" aria-hidden="true"></div>
+  <p class="cs-mono" style="font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-3);margin-top:16px">Pulling forecast and scoring risk&hellip;</p>
+</section>
+
+<section id="errorBox" class="panel error-panel" hidden style="margin:32px">
+  <h2>Couldn&rsquo;t load assessment</h2>
+  <p id="errorMsg"></p>
+  <a href="/" class="cs-btn-primary">Try again</a>
+</section>
+
+{# ═══════════════════════════════════════════════════════════════════
+   REPORT — hidden until data loads
+   ═══════════════════════════════════════════════════════════════ #}
+<section id="report" class="report" hidden>
+
+  {# ── Sticky verdict bar ──────────────────────────────────────── #}
+  <div id="verdictSticky" class="verdict-sticky" data-level="">
+    <span class="vs-verdict" id="vsVerdict"></span>
+    <span class="vs-place" id="vsPlace"></span>
+    <span class="vs-kpis">
+      <span>Soil: <span class="vs-kpi-val" id="vsSoil"></span></span>
+      <span>Precip: <span class="vs-kpi-val" id="vsPrecip"></span></span>
+    </span>
+  </div>
+
+  {# ── VERDICT HERO ────────────────────────────────────────────── #}
+  <header id="verdict" class="verdict cs-verdict-hero" data-level="">
+    <div class="cs-brackets" style="background:var(--card-bg);padding:36px 40px 32px;margin:20px 32px 0;position:relative">
+      <span class="cs-bk-bl"></span><span class="cs-bk-br"></span>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+        <span class="cs-mono" style="font-size:10.5px;letter-spacing:0.16em;text-transform:uppercase;color:var(--paper);background:var(--ink);padding:4px 8px">
+          ASSESSMENT &middot; 72H WINDOW
+        </span>
+        <span id="cropToggle" class="crop-toggle" role="radiogroup" aria-label="Crop" style="display:flex;gap:6px">
+          <button type="button" class="cs-chip crop-toggle-btn" data-crop="corn">Corn</button>
+          <button type="button" class="cs-chip crop-toggle-btn" data-crop="soybeans">Soybeans</button>
+          <button type="button" class="cs-chip crop-toggle-btn" data-crop="winter_wheat">W. Wheat</button>
+          <button type="button" class="cs-chip crop-toggle-btn" data-crop="spring_wheat">S. Wheat</button>
+          <button type="button" class="cs-chip crop-toggle-btn" data-crop="dry_beans">Dry Beans</button>
+          <button type="button" class="cs-chip crop-toggle-btn" data-crop="sugar_beets">Sugar Beets</button>
+          <button type="button" class="cs-chip crop-toggle-btn" data-crop="alfalfa">Alfalfa</button>
+        </span>
+      </div>
+
+      <div class="cs-verdict-grid">
+        <div class="cs-verdict-left">
+          <span class="cs-mono" style="font-size:11px;color:var(--ink-3);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:12px;display:block">VERDICT</span>
+          <div id="verdictBadge" class="cs-verdict-badge"></div>
+          <p id="verdictText" class="cs-display" style="font-size:26px;line-height:1.2;margin:18px 0 0;color:var(--ink)"></p>
+          <p id="verdictDetail" class="cs-mono" style="font-size:11px;color:var(--ink-3);letter-spacing:0.1em;margin-top:16px;text-transform:uppercase"></p>
+          <p id="commercialFarmingDisclaimer" class="commercial-farming-disclaimer" hidden></p>
+          <p id="placeName" hidden></p>
+        </div>
+
+        <div class="cs-survival">
+          <div class="cs-eyebrow" style="margin-bottom:4px">Survival odds &middot; 72 hr window</div>
+          <div style="display:flex;align-items:flex-start;justify-content:center;gap:6px">
+            <span class="cs-survival-num" id="survivalNum">--</span>
+            <span class="cs-survival-pct">%</span>
+          </div>
+          <div class="cs-gauge-bar" id="survivalGauge">
+            <div class="cs-gauge-fill" id="survivalFill" style="width:0;background:var(--amber)"></div>
+            <div class="cs-gauge-mark" style="left:40%"></div>
+            <div class="cs-gauge-mark" style="left:70%"></div>
+          </div>
+          <div class="cs-mono" style="display:flex;justify-content:space-between;font-size:10px;color:var(--ink-3);letter-spacing:0.08em;margin-top:6px;text-transform:uppercase">
+            <span>HOLD &lsaquo; 40</span><span>WAIT</span><span>PLANT &rsaquo; 70</span>
+          </div>
+        </div>
+
+        <div class="cs-verdict-kpis">
+          <div class="cs-kpi-tile cs-st-stop">
+            <div class="cs-eyebrow" style="font-size:10px">MIN SOIL &middot; 48H</div>
+            <div style="display:flex;align-items:baseline;gap:4px">
+              <span class="cs-display" id="kpiSoil" style="font-size:44px;line-height:1">--</span>
+              <span class="cs-mono" style="font-size:14px;color:var(--ink-3)">&deg;F</span>
+            </div>
+            <div class="cs-mono" id="kpiSoilSub" style="font-size:10.5px;color:var(--ink-3);letter-spacing:0.06em"></div>
+          </div>
+          <div class="cs-kpi-tile cs-st-wait">
+            <div class="cs-eyebrow" style="font-size:10px">TOTAL PRECIP &middot; 48H</div>
+            <div style="display:flex;align-items:baseline;gap:4px">
+              <span class="cs-display" id="kpiPrecip" style="font-size:44px;line-height:1">--</span>
+              <span class="cs-mono" style="font-size:14px;color:var(--ink-3)">in</span>
+            </div>
+            <div class="cs-mono" id="kpiPrecipSub" style="font-size:10.5px;color:var(--ink-3);letter-spacing:0.06em"></div>
+          </div>
+          <div class="cs-kpi-tile cs-st-wait">
+            <div class="cs-eyebrow" style="font-size:10px">PEAK UV &middot; 48H</div>
+            <div style="display:flex;align-items:baseline;gap:4px">
+              <span class="cs-display" id="kpiUv" style="font-size:44px;line-height:1">--</span>
+              <span class="cs-mono" style="font-size:14px;color:var(--ink-3)">UVI</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cs-verdict-toolbar">
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button id="saveBtn" class="cs-btn-primary" type="button" style="padding:12px 18px;font-size:12px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            Save field
+          </button>
+          <button id="shareBtn" class="cs-btn-ghost" type="button">Share</button>
+          <button id="exportCsvBtn" class="cs-btn-ghost" type="button">Export CSV</button>
+          <button id="exportPdfBtn" class="cs-btn-ghost" type="button">Export PDF</button>
+          <button id="notifyBtn" class="cs-btn-ghost" type="button" hidden>Alerts</button>
+          <button id="refreshBtn" class="cs-btn-ghost" type="button">Refresh</button>
+          <a id="mapLink" class="cs-btn-ghost" href="/map">Map</a>
+        </div>
+      </div>
+
+      <div class="verdict-field-options" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--rule-soft);display:flex;align-items:center;gap:24px;flex-wrap:wrap">
+        <label class="cs-tile-label" id="tileDrainageToggle">
+          <input type="checkbox" id="fieldTiledCheck" style="width:16px;height:16px;accent-color:var(--amber)" />
+          <span>Tile drainage</span>
+        </label>
+        <label class="population-input" id="populationInput" style="display:flex;align-items:center;gap:8px">
+          <span class="cs-eyebrow">Seeds/acre</span>
+          <input type="number" id="seedsPerAcre" class="cs-input" min="1000" max="2000000" step="500"
+                 placeholder="e.g. 34000" style="width:120px;font-size:14px" />
+        </label>
+        <div class="seed-picker seed-picker--results" id="seedPicker" style="flex:1;min-width:200px">
+          <span class="cs-eyebrow">Seed brand &amp; cultivar</span>
+          <select id="seedBrandSelect" class="cs-select" style="font-size:13px">
+            <option value="">&mdash; Select a brand &mdash;</option>
+            {% for b in corn_brands %}
+            <option value="{{ b }}" data-crop="corn">{{ b }}</option>
+            {% endfor %}
+            {% for b in soy_brands %}
+            <option value="{{ b }}" data-crop="soybeans">{{ b }}</option>
+            {% endfor %}
+          </select>
+          <div id="seedSelected" class="seed-selected" hidden></div>
+          <div class="seed-list-wrap" id="seedListWrap" hidden>
+            <ul id="seedList" class="seed-list" role="listbox" aria-label="Seed cultivars"></ul>
+          </div>
+          <button type="button" id="seedClear" class="seed-clear-btn" hidden>Clear</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  {# ── Alerts panel ────────────────────────────────────────────── #}
+  <section class="panel" id="alertsPanel" data-nav-label="Alerts" hidden style="margin:0 32px">
+    <header class="panel-head">
+      <div class="panel-head-main">
+        <div style="display:flex;gap:14px;align-items:center;margin-bottom:8px">
+          <span class="cs-section-num">&sect; 00</span>
+          <span class="cs-eyebrow">Active conditions</span>
+        </div>
+        <h2 class="cs-display" style="font-size:28px;margin:0;color:var(--ink)">Alerts</h2>
+      </div>
+    </header>
+    <div id="alertsList" class="alerts-list"></div>
+  </section>
+
+  {# ── Seed panel ──────────────────────────────────────────────── #}
+  <section class="panel seed-panel" id="seedPanel" data-nav-label="Seed" hidden style="margin:0 32px">
+    <header class="panel-head">
+      <div class="panel-head-main">
+        <h2>Seed selection</h2>
+        <span class="muted small">How this report was tailored to the selected cultivar.</span>
+      </div>
+    </header>
+    <div id="seedContent" class="seed-content"></div>
+  </section>
+
+  {# ── BEST DAYS STRIP ─────────────────────────────────────────── #}
+  <section id="plantPanel" data-nav-label="Best days" style="padding:32px 32px 16px">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:32px;margin-bottom:24px">
+      <div>
+        <div style="display:flex;gap:14px;align-items:center;margin-bottom:10px">
+          <span class="cs-section-num">&sect; 01</span>
+          <span class="cs-eyebrow">14-day outlook &middot; score blends all factors</span>
+        </div>
+        <h2 class="cs-display" style="font-size:36px;margin:0;color:var(--ink)">Best days to plant.</h2>
+      </div>
+      <div class="panel-actions">
+        <button type="button" class="cs-btn-ghost toggle-extended" data-target="plantPanel" hidden>Show 31 days &rarr;</button>
+        <span class="extended-disclaimer muted small" hidden>Less accurate after 14 days</span>
+      </div>
+    </div>
+    <div id="plantDays" class="plant-days" style="display:flex;gap:0;border-bottom:1.5px solid var(--ink);padding-bottom:4px"></div>
+  </section>
+
+  {# ── RISKS + FORECAST SIDE BY SIDE ──────────────────────────── #}
+  <section style="padding:32px;display:grid;grid-template-columns:1.2fr 1fr;gap:32px" id="risksRow" data-nav-label="Risks">
+    <article>
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:32px;margin-bottom:24px">
+        <div>
+          <div style="display:flex;gap:14px;align-items:center;margin-bottom:10px">
+            <span class="cs-section-num">&sect; 02</span>
+            <span class="cs-eyebrow">22 evaluators scored</span>
+          </div>
+          <h2 class="cs-display" style="font-size:36px;margin:0;color:var(--ink)">Risk factors.</h2>
+        </div>
+      </div>
+      <ul id="riskList" class="risk-list"></ul>
+    </article>
+
+    <article>
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:32px;margin-bottom:24px">
+        <div>
+          <div style="display:flex;gap:14px;align-items:center;margin-bottom:10px">
+            <span class="cs-section-num">&sect; 03</span>
+            <span class="cs-eyebrow">Soil &middot; air &middot; precip</span>
+          </div>
+          <h2 class="cs-display" style="font-size:36px;margin:0;color:var(--ink)">72-hour forecast.</h2>
+        </div>
+      </div>
+      <div style="background:var(--card-bg);padding:20px;border:1px solid var(--rule-soft)">
+        <div class="chart-wrap"><canvas id="hourlyChart"></canvas></div>
+      </div>
+    </article>
+  </section>
+
+  {# ── DEPTH ADVISOR ───────────────────────────────────────────── #}
+  <section class="panel" id="depthPanel" data-nav-label="Depth" hidden style="margin:0 32px">
+    <header class="panel-head">
+      <div class="panel-head-main">
+        <div style="display:flex;gap:14px;align-items:center;margin-bottom:8px">
+          <span class="cs-section-num">&sect; 04</span>
+          <span class="cs-eyebrow">Per-field seeding depth</span>
+        </div>
+        <h2 class="cs-display" style="font-size:28px;margin:0;color:var(--ink)">Planting depth advisor</h2>
+      </div>
+    </header>
+    <div id="depthContent" class="depth-content"></div>
+  </section>
+
+  {# ── NDVI + PROFIT + FIELD PROFILE — 3-column grid ──────────── #}
+  <div style="padding:48px 32px 16px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px" id="threeColGrid">
+    <section class="panel" id="ndviPanel" data-nav-label="NDVI" hidden style="background:var(--card-bg);padding:24px;margin:0">
+      <header class="panel-head" style="margin-bottom:12px">
+        <div class="panel-head-main">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span class="cs-section-num">&sect; 05 &mdash; FIELD HEALTH</span>
+            <span id="ndviHealth" class="ndvi-badge cs-mono" style="font-size:10.5px;letter-spacing:0.14em;font-weight:600"></span>
+          </div>
+        </div>
+      </header>
+      <div id="ndviContent" class="ndvi-content">
+        <div class="ndvi-summary" id="ndviSummary"></div>
+        <div class="chart-wrap"><canvas id="ndviChart"></canvas></div>
+        <div class="ndvi-readings" id="ndviReadings"></div>
+      </div>
+    </section>
+
+    <section class="panel" id="profitPanel" data-nav-label="Profit" hidden style="background:var(--card-bg);padding:24px;margin:0">
+      <header class="panel-head" style="margin-bottom:12px">
+        <div class="panel-head-main">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span class="cs-section-num">&sect; 06 &mdash; PROFIT FORECAST</span>
+            <button type="button" class="cs-btn-ghost" id="profitEditBtn" style="font-size:10px;padding:4px 8px">Edit costs</button>
+          </div>
+        </div>
+      </header>
+      <div id="profitContent" class="profit-content"></div>
+    </section>
+
+    <section class="panel" id="sourcesPanel" data-nav-label="Field" hidden style="background:var(--card-bg);padding:24px;margin:0">
+      <header class="panel-head" style="margin-bottom:12px">
+        <div class="panel-head-main">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span class="cs-section-num">&sect; 07 &mdash; FIELD PROFILE</span>
+            <span class="cs-mono" style="font-size:10.5px;letter-spacing:0.14em;color:var(--ink-3)">USDA SSURGO</span>
+          </div>
+        </div>
+      </header>
+      <div id="sourcesContent" class="sources-grid"></div>
+    </section>
+  </div>
+
+  {# ── DAILY OUTLOOK STRIP ─────────────────────────────────────── #}
+  <section id="dailyPanel" data-nav-label="Outlook" style="padding:48px 32px 16px">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:32px;margin-bottom:24px">
+      <div>
+        <div style="display:flex;gap:14px;align-items:center;margin-bottom:10px">
+          <span class="cs-section-num">&sect; 08</span>
+          <span class="cs-eyebrow">14-day daily outlook</span>
+        </div>
+        <h2 class="cs-display" id="dailyHeading" style="font-size:36px;margin:0;color:var(--ink)">Day-by-day call sheet.</h2>
+      </div>
+      <div class="panel-actions">
+        <button type="button" class="cs-btn-ghost toggle-extended" data-target="dailyPanel" hidden>Show 31 days</button>
+        <span class="extended-disclaimer muted small" hidden>Less accurate after 14 days</span>
+      </div>
+    </div>
+    <div id="dailyStrip" class="daily-strip"></div>
+  </section>
+
+  {# ── REMAINING PANELS (keep existing structure for JS compat) ── #}
+  <section class="panel" id="fertilityPanel" data-nav-label="Fertility" hidden style="margin:0 32px">
+    <header class="panel-head">
+      <div class="panel-head-main">
+        <h2>Nutrient &amp; Pest Management</h2>
+        <span class="muted small">Tri-State Fertility Guide (MSU/OSU/Purdue) + GDD-based pest timing.</span>
+      </div>
+      <div class="panel-actions">
+        <button type="button" class="cs-btn-ghost" id="fertilitySettingsBtn">Adjust inputs</button>
+      </div>
+    </header>
+    <div id="fertilityContent" class="fertility-content"></div>
+  </section>
+
+  <section class="panel" id="yieldPanel" data-nav-label="Yield" hidden style="margin:0 32px">
+    <header class="panel-head">
+      <div class="panel-head-main">
+        <h2>Yield Estimation</h2>
+        <span class="muted small">Pre-harvest yield potential from GDD pace, NDVI, and drought signals.</span>
+      </div>
+    </header>
+    <div id="yieldContent" class="yield-content"></div>
+  </section>
+
+  <section class="panel" id="rotationPanel" data-nav-label="Rotation" hidden style="margin:0 32px">
+    <header class="panel-head">
+      <div class="panel-head-main">
+        <h2>Crop Rotation Intelligence</h2>
+        <span class="muted small">CropScape history + extension rotation guidelines.</span>
+      </div>
+      <div class="panel-actions">
+        <span id="rotationScore" class="rotation-score-badge"></span>
+      </div>
+    </header>
+    <div id="rotationContent" class="rotation-content"></div>
+  </section>
+
+  <section class="panel" id="calendarPanel" data-nav-label="Calendar" style="margin:0 32px">
+    <header class="panel-head">
+      <div class="panel-head-main">
+        <h2>14-Day Tactical Calendar</h2>
+        <span class="muted small">Color-coded planting and spray windows at a glance.</span>
+      </div>
+      <div class="panel-actions">
+        <a class="cs-btn-ghost" id="icalExport" href="#" download>Export .ics</a>
+      </div>
+    </header>
+    <div id="tacticalCalendar" class="tactical-calendar"></div>
+    <div id="sprayWindows" class="spray-windows"></div>
+  </section>
+
+  <section class="panel" id="validationPanel" data-nav-label="Validate" hidden style="margin:0 32px">
+    <header class="panel-head">
+      <div class="panel-head-main">
+        <h2>Model Validation</h2>
+        <span class="muted small">Report your actual planting outcomes to help calibrate predictions.</span>
+      </div>
+      <div class="panel-actions">
+        <button type="button" class="cs-btn-ghost" id="reportOutcomeBtn">Report outcome</button>
+      </div>
+    </header>
+    <div id="validationContent" class="validation-content">
+      <div id="validationStats" class="validation-stats"></div>
+      <div id="validationNass" class="validation-nass"></div>
+    </div>
+  </section>
+
+  <section class="panel" id="communityPanel" data-nav-label="Community" hidden style="margin:0 32px">
+    <header class="panel-head">
+      <div class="panel-head-main">
+        <h2>Community Benchmarks</h2>
+        <span class="muted small">Anonymous county-level comparisons from NASS and opt-in community data.</span>
+      </div>
+      <div class="panel-actions">
+        <button type="button" class="cs-btn-ghost" id="communityContributeBtn">Contribute data</button>
+      </div>
+    </header>
+    <div id="communityContent" class="community-content"></div>
+  </section>
+
+  <section class="panel" id="historyPanel" data-nav-label="History" hidden style="margin:0 32px">
+    <header class="panel-head">
+      <h2>Historical context</h2>
+      <span class="muted small">Recent actuals from Open-Meteo Archive plus same-date prior-year normals.</span>
+    </header>
+    <div id="historyContent" class="history-grid"></div>
+  </section>
+
+  {# ── SOURCES ROW ─────────────────────────────────────────────── #}
+  <section style="padding:32px">
+    <hr class="cs-rule-strong" />
+    <div style="padding:16px 0;display:flex;justify-content:space-between;font-family:var(--f-mono);font-size:10.5px;color:var(--ink-3);letter-spacing:0.14em;text-transform:uppercase">
+      <span>SOURCES &middot; USDA SSURGO &middot; NOAA NWS &middot; NASA POWER &middot; OPEN-METEO &middot; ISU ICM &middot; SENTINEL-2</span>
+      <span id="assessmentId"></span>
+    </div>
+    <hr class="cs-rule" />
+  </section>
+</section>
+
+<nav id="resultsNav" class="results-nav" aria-label="Jump to section" hidden></nav>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/notifications.js"></script>
+<script src="/static/js/results.js?v=6"></script>
+{% endblock %}

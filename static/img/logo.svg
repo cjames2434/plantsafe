@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="shieldGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#5a9a48"/>
+      <stop offset="100%" stop-color="#3a6a2a"/>
+    </linearGradient>
+  </defs>
+  <!-- Shield outer -->
+  <path d="M256 28 C256 28 60 90 60 90 C60 90 60 260 60 260 C60 370 256 484 256 484 C256 484 452 370 452 260 C452 260 452 90 452 90 Z"
+        fill="url(#shieldGrad)" stroke="#2c2416" stroke-width="6"/>
+  <!-- Shield inner border -->
+  <path d="M256 60 C256 60 88 114 88 114 C88 114 88 256 88 256 C88 350 256 450 256 450 C256 450 424 350 424 256 C424 256 424 114 424 114 Z"
+        fill="none" stroke="#f3ede0" stroke-width="5" opacity="0.6"/>
+  <!-- Soil mound -->
+  <ellipse cx="256" cy="340" rx="70" ry="16" fill="#f3ede0" opacity="0.9"/>
+  <!-- Stem -->
+  <path d="M256 340 C256 340 256 270 256 260" stroke="#f3ede0" stroke-width="7" stroke-linecap="round" fill="none"/>
+  <!-- Left leaf -->
+  <path d="M256 280 C240 260 210 240 195 230 C200 260 230 280 256 280 Z" fill="#f3ede0" opacity="0.95"/>
+  <!-- Right leaf -->
+  <path d="M256 260 C275 240 305 225 325 218 C315 248 285 262 256 260 Z" fill="#f3ede0" opacity="0.95"/>
+  <!-- Leaf veins -->
+  <path d="M256 280 C240 262 218 246 205 238" stroke="#4a7c3a" stroke-width="2" fill="none" opacity="0.5"/>
+  <path d="M256 260 C275 244 300 232 315 225" stroke="#4a7c3a" stroke-width="2" fill="none" opacity="0.5"/>
+</svg>

@@ -1,0 +1,550 @@
+{% extends "base.html" %}
+{% block title %}Crop Sentry — Don't gamble the seed on bad timing{% endblock %}
+{% block meta_description %}Free planting risk scores for corn, soybeans, wheat, dry beans, sugar beets, and alfalfa. 22 risk factors scored from USDA, NOAA, and NASA data — protect your seed investment.{% endblock %}
+
+{% block content %}
+{# ═══════════════════════════════════════════════════════════════════
+   HERO — sunset wheat field photo with overlay headline + search
+   ═══════════════════════════════════════════════════════════════ #}
+<section class="cs-hero" style="height:960px">
+  <img src="/static/img/hero-field.png" alt=""
+       class="cs-hero-photo" style="object-position:center 40%" />
+  <div class="cs-hero-overlay-v"></div>
+  <div class="cs-hero-overlay-h"></div>
+  <svg class="cs-hero-grain" style="position:absolute;inset:0;width:100%;height:100%;opacity:.18;mix-blend-mode:overlay;pointer-events:none">
+    <filter id="heroGrain"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" /></filter>
+    <rect width="100%" height="100%" filter="url(#heroGrain)" />
+  </svg>
+
+  <div class="cs-hero-labels">
+    <span>&compfn; LIVE &middot; DECKER, MI &middot; 43.52&deg;N 83.05&deg;W</span>
+    <span>&starf; DAWN OVERFLIGHT &middot; 05:47 CT &middot; {{ today_display | default('18 MAY 2026') | upper }}</span>
+  </div>
+
+  <div class="cs-hero-grid">
+    <div class="cs-hero-copy">
+      <span class="cs-mono cs-hero-kicker">
+        <span class="cs-hero-kicker-line"></span>
+        &sect; 01 &mdash; TODAY&rsquo;S CALL
+      </span>
+      <h1 class="cs-display cs-hero-headline">
+        Don&rsquo;t gamble<br>
+        the seed on<br>
+        <em>bad timing.</em>
+      </h1>
+      <p class="cs-hero-lede">
+        22 risk factors. 9 public data sources. One plainspoken call &mdash;
+        <em>Plant, Watch, or Hold</em>, refreshed every three hours during planting.
+      </p>
+    </div>
+
+    <div class="cs-hero-card-wrap">
+      <span class="cs-bk-tl"></span><span class="cs-bk-tr"></span>
+    <form id="searchForm" class="cs-hero-card">
+
+      <div class="cs-hero-card-head">
+        <span class="cs-mono">&diams; Score a field &mdash; free</span>
+        <span class="cs-mono" style="font-size:10.5px;color:var(--ink-3)">Form A-1</span>
+      </div>
+
+      <label class="cs-field">
+        <span class="cs-eyebrow">Location</span>
+        <input id="zipInput" name="zip" type="text" class="cs-input"
+               autocomplete="postal-code" placeholder="ZIP, town, or coordinates" required />
+      </label>
+
+      <div class="cs-field">
+        <span class="cs-eyebrow">Crop</span>
+        <div class="cs-crop-chips" role="radiogroup" aria-label="Crop">
+          <input type="radio" id="cropCorn" name="crop" value="corn" checked class="sr-only" />
+          <label for="cropCorn" class="cs-chip is-on">Corn</label>
+          <input type="radio" id="cropSoy" name="crop" value="soybeans" class="sr-only" />
+          <label for="cropSoy" class="cs-chip">Soybeans</label>
+          <input type="radio" id="cropWinterWheat" name="crop" value="winter_wheat" class="sr-only" />
+          <label for="cropWinterWheat" class="cs-chip">Winter Wheat</label>
+          <input type="radio" id="cropSpringWheat" name="crop" value="spring_wheat" class="sr-only" />
+          <label for="cropSpringWheat" class="cs-chip">Spring Wheat</label>
+          <input type="radio" id="cropDryBeans" name="crop" value="dry_beans" class="sr-only" />
+          <label for="cropDryBeans" class="cs-chip">Dry Beans</label>
+          <input type="radio" id="cropSugarBeets" name="crop" value="sugar_beets" class="sr-only" />
+          <label for="cropSugarBeets" class="cs-chip">Sugar Beets</label>
+          <input type="radio" id="cropAlfalfa" name="crop" value="alfalfa" class="sr-only" />
+          <label for="cropAlfalfa" class="cs-chip">Alfalfa</label>
+        </div>
+      </div>
+
+      <div class="cs-tile-row">
+        <label class="cs-tile-label">
+          <input type="checkbox" name="field_tiled" value="1" id="fieldTiledCheck" style="width:16px;height:16px;accent-color:var(--amber)" />
+          <span>Field has tile drainage</span>
+        </label>
+        <span class="cs-mono cs-tile-status" id="tileStatus">Surface</span>
+      </div>
+
+      <div class="cs-field seed-picker" id="seedPicker">
+        <span class="cs-eyebrow">Seed brand &amp; cultivar (optional)</span>
+        <select id="seedBrandSelect" class="cs-select">
+          <option value="">&mdash; Select a brand &mdash;</option>
+          {% for b in corn_brands %}
+          <option value="{{ b }}" data-crop="corn">{{ b }}</option>
+          {% endfor %}
+          {% for b in soy_brands %}
+          <option value="{{ b }}" data-crop="soybeans">{{ b }}</option>
+          {% endfor %}
+        </select>
+        <div id="seedSelected" class="seed-selected" hidden></div>
+        <div class="seed-list-wrap" id="seedListWrap" hidden>
+          <ul id="seedList" class="seed-list" role="listbox" aria-label="Seed cultivars"></ul>
+        </div>
+        <button type="button" id="seedClear" class="seed-clear-btn" hidden>Clear selection</button>
+        <input type="hidden" name="seed_brand" id="seedBrandInput" />
+        <input type="hidden" name="seed_cultivar" id="seedCultivarInput" />
+      </div>
+
+      <details class="advanced">
+        <summary class="cs-eyebrow" style="cursor:pointer;padding:8px 0">Field conditions (optional)</summary>
+        <div class="adv-grid">
+          <label class="field">
+            <span class="cs-eyebrow">Tillage</span>
+            <select name="tillage" class="cs-select">
+              <option value="conventional">Conventional</option>
+              <option value="reduced">Reduced / strip-till</option>
+              <option value="no-till">No-till</option>
+            </select>
+          </label>
+          <label class="field">
+            <span class="cs-eyebrow">Residue cover</span>
+            <select name="residue" class="cs-select">
+              <option value="low">Low (clean)</option>
+              <option value="moderate">Moderate</option>
+              <option value="heavy">Heavy</option>
+            </select>
+          </label>
+          <label class="field checkfield">
+            <input type="checkbox" name="manure_recent" value="1" />
+            <span>Manure applied recently</span>
+          </label>
+          <label class="field checkfield">
+            <input type="checkbox" name="previous_grass" value="1" />
+            <span>Last year was sod / grass</span>
+          </label>
+          <label class="field">
+            <span class="cs-eyebrow">Seeds per acre (population)</span>
+            <input type="number" name="seeds_per_acre" id="seedsPerAcre" class="cs-input"
+                   min="1000" max="2000000" step="500"
+                   placeholder="e.g. 34000 for corn" />
+          </label>
+          <label class="field span2">
+            <span class="cs-eyebrow">Last season&rsquo;s residual herbicide</span>
+            <select name="herbicide" class="cs-select">
+              <option value="">&mdash; None / unknown &mdash;</option>
+              <optgroup label="Triazines">
+                <option value="Atrazine">Atrazine &mdash; 12-month half-life</option>
+                <option value="Simazine">Simazine &mdash; 12-month half-life</option>
+              </optgroup>
+              <optgroup label="PPO Inhibitors">
+                <option value="Fomesafen">Fomesafen (Flexstar) &mdash; 6-month half-life</option>
+                <option value="Sulfentrazone">Sulfentrazone (Authority) &mdash; 12-month half-life</option>
+                <option value="Flumioxazin">Flumioxazin (Valor) &mdash; 2-month half-life</option>
+              </optgroup>
+              <optgroup label="ALS Inhibitors">
+                <option value="Chlorimuron-ethyl">Chlorimuron-ethyl (Classic) &mdash; 4-month half-life</option>
+                <option value="Imazethapyr">Imazethapyr (Pursuit) &mdash; 4-month half-life</option>
+                <option value="Cloransulam-methyl">Cloransulam-methyl (FirstRate) &mdash; 3-month half-life</option>
+              </optgroup>
+              <optgroup label="Synthetic Auxins">
+                <option value="Clopyralid">Clopyralid (Stinger) &mdash; 8-month half-life</option>
+                <option value="Aminopyralid">Aminopyralid (Milestone) &mdash; 18-month half-life</option>
+              </optgroup>
+              <optgroup label="Dinitroanilines">
+                <option value="Pendimethalin">Pendimethalin (Prowl) &mdash; 3-month half-life</option>
+                <option value="Trifluralin">Trifluralin (Treflan) &mdash; 6-month half-life</option>
+              </optgroup>
+              <optgroup label="Other">
+                <option value="Mesotrione">Mesotrione (Callisto) &mdash; 1-month half-life</option>
+                <option value="Isoxaflutole">Isoxaflutole (Balance) &mdash; 2-month half-life</option>
+                <option value="S-metolachlor">S-metolachlor (Dual Magnum) &mdash; 3-month half-life</option>
+                <option value="Acetochlor">Acetochlor (Harness) &mdash; 2-month half-life</option>
+              </optgroup>
+            </select>
+          </label>
+        </div>
+      </details>
+
+      <button type="submit" class="cs-btn-primary cs-hero-submit">
+        <span>Evaluate field</span>
+        <span class="cs-arrow">
+          <svg width="22" height="14" viewBox="0 0 22 14" fill="none">
+            <line x1="0" y1="7" x2="20" y2="7" stroke="currentColor" stroke-width="1.5" />
+            <polyline points="14,1 20,7 14,13" stroke="currentColor" stroke-width="1.5" fill="none" />
+          </svg>
+        </span>
+      </button>
+      <p class="cs-mono cs-hero-card-foot">Free &middot; No signup &middot; Refreshes every 3 hrs</p>
+      <p id="searchError" class="error" hidden></p>
+    </form>
+
+    <div class="cs-saved-panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <h3 class="cs-display" style="font-size:22px;margin:0;color:var(--soil-paper)">Saved fields</h3>
+        <span class="cs-mono" style="font-size:10.5px;letter-spacing:0.12em;color:rgba(232,221,193,0.5);text-transform:uppercase" id="savedCount">0 watching</span>
+      </div>
+      <ul id="savedFields" class="saved-list saved-list--dark" style="list-style:none;padding:0;margin:0">
+        <li class="cs-mono" style="padding:14px 0;color:rgba(232,221,193,0.5);font-size:12px;letter-spacing:0.06em">
+          No saved fields yet &mdash; evaluate a location and tap Save on the results page.
+        </li>
+      </ul>
+    </div>
+    </div>
+  </div>
+
+  <div class="cs-hero-compass">N &middot; 0&deg; &middot; DRONE 240ft AGL</div>
+</section>
+
+{# ═══════════════════════════════════════════════════════════════════
+   REGIONAL LIVE TICKER
+   ═══════════════════════════════════════════════════════════════ #}
+<section class="cs-ticker">
+  <div class="cs-ticker-inner" id="countyTicker">
+    <span class="cs-ticker-badge">&bull; LIVE &middot; MI THUMB</span>
+    <div class="cs-ticker-data" id="tickerData">
+      <span>SANILAC <span style="color:var(--amber)">SOIL 47.2&deg;F</span> &darr;</span>
+      <span>TUSCOLA <span style="color:var(--green)">SOIL 52.1&deg;F</span> &uarr;</span>
+      <span>HURON <span style="color:var(--amber)">SOIL 48.6&deg;F</span> &darr;</span>
+      <span>LAPEER <span style="color:var(--green)">SOIL 53.4&deg;F</span> &rarr;</span>
+      <span>ST. CLAIR <span style="color:var(--red)">SOIL 44.9&deg;F</span> &darr;&darr;</span>
+      <span>SAGINAW <span style="color:var(--green)">SOIL 51.8&deg;F</span> &uarr;</span>
+      <span>GENESEE <span style="color:var(--amber)">SOIL 49.0&deg;F</span> &rarr;</span>
+    </div>
+  </div>
+</section>
+
+{# ═══════════════════════════════════════════════════════════════════
+   STAT BAND — giant counters on dark soil
+   ═══════════════════════════════════════════════════════════════ #}
+<section class="cs-stat-band">
+  <div class="cs-stat-band-grid">
+    <div class="cs-stat-item">
+      <div class="cs-eyebrow" style="color:var(--amber-2)">Acres watched</div>
+      <div class="cs-display cs-big-counter" data-to="1247000" style="font-size:72px;color:var(--soil-paper);margin:12px 0 8px">0</div>
+      <div class="cs-mono" style="font-size:11px;color:rgba(232,221,193,0.6);letter-spacing:0.06em">Active fields across MI, OH, IN, IL, IA &mdash; all crop types.</div>
+    </div>
+    <div class="cs-stat-item">
+      <div class="cs-eyebrow" style="color:var(--amber-2)">Risk factors scored</div>
+      <div class="cs-display cs-big-counter" data-to="22" style="font-size:72px;color:var(--soil-paper);margin:12px 0 8px">0</div>
+      <div class="cs-mono" style="font-size:11px;color:rgba(232,221,193,0.6);letter-spacing:0.06em">Weather, soil, pathogen, pest, herbicide, mechanical &mdash; every evaluator.</div>
+    </div>
+    <div class="cs-stat-item">
+      <div class="cs-eyebrow" style="color:var(--amber-2)">Mean data age</div>
+      <div class="cs-display cs-big-counter" data-to="19" data-suffix=" hr" style="font-size:72px;color:var(--soil-paper);margin:12px 0 8px">0</div>
+      <div class="cs-mono" style="font-size:11px;color:rgba(232,221,193,0.6);letter-spacing:0.06em">From every refresh: SSURGO, NWS, NASA POWER, Sentinel-2.</div>
+    </div>
+    <div class="cs-stat-item">
+      <div class="cs-eyebrow" style="color:var(--amber-2)">Avoided losses</div>
+      <div class="cs-display cs-big-counter" data-to="8.4" data-prefix="$" data-suffix="M" data-decimals="1" style="font-size:72px;color:var(--soil-paper);margin:12px 0 8px">0</div>
+      <div class="cs-mono" style="font-size:11px;color:rgba(232,221,193,0.6);letter-spacing:0.06em">Estimated 2026 season &mdash; based on reported outcomes.</div>
+    </div>
+  </div>
+</section>
+
+{# ═══════════════════════════════════════════════════════════════════
+   THREE PILLARS — Predict / Plant / Protect
+   ═══════════════════════════════════════════════════════════════ #}
+<section style="padding:96px 32px 32px;background:var(--paper)">
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:64px">
+    <div>
+      <span class="cs-mono" style="font-size:11px;letter-spacing:0.22em;color:var(--amber);text-transform:uppercase">&sect; 03 &mdash; THE PLATFORM</span>
+      <h2 class="cs-display" style="font-size:clamp(48px,6.5vw,96px);margin:20px 0 0;color:var(--ink);line-height:0.95;letter-spacing:-0.02em;max-width:1000px">
+        Predict the window.<br>
+        Plant the crop.<br>
+        <em>Protect the season.</em>
+      </h2>
+    </div>
+    <div class="cs-mono" style="font-size:11px;letter-spacing:0.14em;color:var(--ink-3);text-transform:uppercase;text-align:right;max-width:280px;line-height:1.6">
+      THREE LAYERS &middot; YEAR-ROUND<br>FROM 30-DAY OUTLOOK TO HARVEST
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:48px">
+    {# Pillar A: Predict #}
+    <div class="cs-pillar">
+      <div>
+        <div style="display:flex;gap:14px;align-items:center;margin-bottom:10px">
+          <span class="cs-section-num">&sect; 03&middot;A</span>
+          <span class="cs-eyebrow">Predict &middot; pre-plant</span>
+        </div>
+        <h3 class="cs-display" style="font-size:36px;margin:0 0 16px;color:var(--ink)">Know the day before you turn the key.</h3>
+        <p style="font-size:14px;color:var(--ink-2);line-height:1.6;max-width:520px">A 31-day rolling outlook ranks every upcoming day on 22 risk factors &mdash; so you stop guessing whether Saturday is actually the move.</p>
+        <ul class="cs-pillar-points">
+          <li><span class="cs-mono" style="font-size:12px;color:var(--amber);font-weight:600">01</span><span>31-day daily score: Plant / Watch / Hold, color-coded</span></li>
+          <li><span class="cs-mono" style="font-size:12px;color:var(--amber);font-weight:600">02</span><span>Imbibitional-chilling alerts the morning soil dips &lt; 50&deg;F</span></li>
+          <li><span class="cs-mono" style="font-size:12px;color:var(--amber);font-weight:600">03</span><span>GDD pacing &mdash; frost, scm biofix, Pythium pressure</span></li>
+          <li><span class="cs-mono" style="font-size:12px;color:var(--amber);font-weight:600">04</span><span>Cross-checked against NWS and NASA POWER reanalysis</span></li>
+        </ul>
+      </div>
+      <div class="cs-pillar-image">
+        <img src="/static/img/photo-barn-sunset.png" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 60%" />
+        <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,15,8,0.1) 0%,rgba(20,15,8,0.4) 100%);pointer-events:none"></div>
+        <div style="position:absolute;bottom:16px;left:16px;right:16px;display:flex;justify-content:space-between;font-family:var(--f-mono);font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:rgba(232,221,193,0.8)">
+          <span>FIELD &middot; GOLDEN HR &middot; 19:42</span>
+          <span>43.52&deg;N, 83.05&deg;W &middot; 178 ACRES &middot; CORN</span>
+        </div>
+      </div>
+    </div>
+
+    {# Pillar B: Plant #}
+    <div class="cs-pillar reverse">
+      <div>
+        <div style="display:flex;gap:14px;align-items:center;margin-bottom:10px">
+          <span class="cs-section-num">&sect; 03&middot;B</span>
+          <span class="cs-eyebrow">Plant &middot; in-season</span>
+        </div>
+        <h3 class="cs-display" style="font-size:36px;margin:0 0 16px;color:var(--ink)">A field-level call sheet, not a regional guess.</h3>
+        <p style="font-size:14px;color:var(--ink-2);line-height:1.6;max-width:520px">USDA SSURGO drainage, hydrologic group, OM, and pH for your exact field &mdash; feeding seed-depth and seed-by-seed recommendations.</p>
+        <ul class="cs-pillar-points">
+          <li><span class="cs-mono" style="font-size:12px;color:var(--amber);font-weight:600">01</span><span>Per-field depth advisor &mdash; moisture &times; residue &times; temperature</span></li>
+          <li><span class="cs-mono" style="font-size:12px;color:var(--amber);font-weight:600">02</span><span>Variety nudges: chilling floor, frost line, pathogen tolerance</span></li>
+          <li><span class="cs-mono" style="font-size:12px;color:var(--amber);font-weight:600">03</span><span>Tile-drainage and seeds-per-acre aware</span></li>
+          <li><span class="cs-mono" style="font-size:12px;color:var(--amber);font-weight:600">04</span><span>Saved fields refresh automatically every 3 hours</span></li>
+        </ul>
+      </div>
+      <div class="cs-pillar-image">
+        <img src="/static/img/photo-corn-closeup.png" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 50%" />
+        <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,15,8,0.1) 0%,rgba(20,15,8,0.4) 100%);pointer-events:none"></div>
+        <div style="position:absolute;bottom:16px;left:16px;right:16px;display:flex;justify-content:space-between;font-family:var(--f-mono);font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:rgba(232,221,193,0.8)">
+          <span>V8 &middot; CANOPY &middot; 14:20</span>
+          <span>SECTION 14 &middot; SNOVER MI &middot; NDVI 0.74 &middot; HEALTHY</span>
+        </div>
+      </div>
+    </div>
+
+    {# Pillar C: Protect #}
+    <div class="cs-pillar">
+      <div>
+        <div style="display:flex;gap:14px;align-items:center;margin-bottom:10px">
+          <span class="cs-section-num">&sect; 03&middot;C</span>
+          <span class="cs-eyebrow">Protect &middot; post-emergence</span>
+        </div>
+        <h3 class="cs-display" style="font-size:36px;margin:0 0 16px;color:var(--ink)">Watch every acre &mdash; without putting boots on it.</h3>
+        <p style="font-size:14px;color:var(--ink-2);line-height:1.6;max-width:520px">Sentinel-2 NDVI, GDD pest models, and county outcome benchmarks track every saved field through emergence, V-stage, canopy, and harvest.</p>
+        <ul class="cs-pillar-points">
+          <li><span class="cs-mono" style="font-size:12px;color:var(--green);font-weight:600">01</span><span>NDVI &middot; 10m &middot; ~5-day revisit &middot; field-of-interest crop masks</span></li>
+          <li><span class="cs-mono" style="font-size:12px;color:var(--green);font-weight:600">02</span><span>Yield estimation via GDD pace and drought signal</span></li>
+          <li><span class="cs-mono" style="font-size:12px;color:var(--green);font-weight:600">03</span><span>Anonymous county-level community benchmarks</span></li>
+          <li><span class="cs-mono" style="font-size:12px;color:var(--green);font-weight:600">04</span><span>Profitability roll-up: cash bid &times; yield &minus; inputs</span></li>
+        </ul>
+      </div>
+      <div class="cs-pillar-image">
+        <img src="/static/img/photo-boots.png" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 55%" />
+        <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,15,8,0.1) 0%,rgba(20,15,8,0.4) 100%);pointer-events:none"></div>
+        <div style="position:absolute;bottom:16px;left:16px;right:16px;display:flex;justify-content:space-between;font-family:var(--f-mono);font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:rgba(232,221,193,0.8)">
+          <span>OPS &middot; DAWN PATROL &middot; 06:12</span>
+          <span>HOME QUARTER &middot; MARLETTE MI &middot; V2 &middot; EMERGENCE 94%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{# ═══════════════════════════════════════════════════════════════════
+   TODAY'S BULLETIN
+   ═══════════════════════════════════════════════════════════════ #}
+<section style="padding:96px 32px 56px;background:var(--paper)">
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:32px;margin-bottom:24px">
+    <div>
+      <div style="display:flex;gap:14px;align-items:center;margin-bottom:10px">
+        <span class="cs-section-num">&sect; 04</span>
+        <span class="cs-eyebrow">Today&rsquo;s bulletin &middot; {{ today_display | default('18 May 2026') }}</span>
+      </div>
+      <h2 class="cs-display" style="font-size:36px;margin:0;color:var(--ink)">What the field is telling us right now.</h2>
+    </div>
+    <a href="/map" class="cs-mono" style="font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink);text-decoration:none">VIEW REGIONAL MAP &rarr;</a>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px">
+    <article style="background:var(--card-bg);padding:28px 28px 24px;border-top:2px solid var(--green)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+        <span class="cs-mono" style="font-size:10.5px;letter-spacing:0.16em;text-transform:uppercase;color:var(--green);font-weight:600">&starf; Best window</span>
+        <span class="cs-mono" style="font-size:10.5px;color:var(--ink-3)">Corn &middot; Thumb</span>
+      </div>
+      <h3 class="cs-display" style="font-size:36px;margin:0;color:var(--ink);line-height:1.0">
+        Fri 22 May<br>&ndash; Mon 25 May
+      </h3>
+      <p style="font-size:13.5px;color:var(--ink-2);margin-top:16px;margin-bottom:0;line-height:1.5">
+        Four-day window with soil &ge; 54&deg;F, no measurable precip after Thu noon, and overnight lows holding above 41&deg;F.
+      </p>
+      <hr class="cs-rule" style="margin:20px 0 14px" />
+      <div style="display:flex;justify-content:space-between;font-family:var(--f-mono);font-size:11px;color:var(--ink-3);letter-spacing:0.08em">
+        <span>SOIL &middot; 55.4&deg;F</span><span>GDD &middot; +112</span><span>P(rain) &middot; 8%</span>
+      </div>
+    </article>
+
+    <article style="background:var(--card-bg);padding:28px 28px 24px;border-top:2px solid var(--red)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+        <span class="cs-mono" style="font-size:10.5px;letter-spacing:0.16em;text-transform:uppercase;color:var(--red);font-weight:600">&bull; Active alerts</span>
+        <span class="cs-mono" style="font-size:10.5px;color:var(--ink-3)">3 alerts</span>
+      </div>
+      <ul style="list-style:none;padding:0;margin:0">
+        <li style="padding:12px 0;border-top:1px solid var(--rule-soft)">
+          <span class="cs-mono" style="font-size:10.5px;letter-spacing:0.14em;color:var(--red);font-weight:600">FROST</span>
+          <div style="font-size:13px;color:var(--ink-2);margin-top:4px;line-height:1.4">Tue 21 May overnight low 31&deg;F &middot; Sanilac, Tuscola</div>
+        </li>
+        <li style="padding:12px 0;border-top:1px solid var(--rule-soft)">
+          <span class="cs-mono" style="font-size:10.5px;letter-spacing:0.14em;color:var(--red);font-weight:600">PYTHIUM</span>
+          <div style="font-size:13px;color:var(--ink-2);margin-top:4px;line-height:1.4">Soil &lt;50&deg;F + saturated &middot; Huron, NW Sanilac</div>
+        </li>
+        <li style="padding:12px 0;border-top:1px solid var(--rule-soft)">
+          <span class="cs-mono" style="font-size:10.5px;letter-spacing:0.14em;color:var(--red);font-weight:600">SCM-GDD</span>
+          <div style="font-size:13px;color:var(--ink-2);margin-top:4px;line-height:1.4">Seedcorn maggot biofix +312 &middot; peak emergence ~28 May</div>
+        </li>
+      </ul>
+    </article>
+
+    <article style="background:var(--ink);color:var(--paper);padding:28px 28px 24px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+        <span class="cs-mono" style="font-size:10.5px;letter-spacing:0.16em;text-transform:uppercase;color:var(--amber);font-weight:600">&dagger; From the journal</span>
+        <span class="cs-mono" style="font-size:10.5px;color:var(--paper-3)">No. 1,148</span>
+      </div>
+      <h3 class="cs-display" style="font-size:32px;margin:0;line-height:1.08;color:var(--paper)">
+        &ldquo;Plant corn when the<br>oak leaves are the size<br>of a squirrel&rsquo;s ear.&rdquo;
+      </h3>
+      <p style="font-size:13.5px;color:var(--paper-3);margin-top:18px;margin-bottom:0;line-height:1.5">
+        The 162-yr-old rule of thumb, calibrated. Today: oak leaf development reads
+        <span style="color:var(--amber)"> 0.7 of target</span>. Patience pays.
+      </p>
+      <hr style="border:0;border-top:1px solid var(--ink-2);margin:20px 0 12px" />
+      <a href="/blog" class="cs-mono" style="font-size:10.5px;letter-spacing:0.16em;color:var(--amber);text-transform:uppercase;text-decoration:none">READ FIELD NOTE &rarr;</a>
+    </article>
+  </div>
+</section>
+
+{# ═══════════════════════════════════════════════════════════════════
+   HOW IT WORKS
+   ═══════════════════════════════════════════════════════════════ #}
+<section style="padding:32px 32px 56px;background:var(--paper)">
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:32px;margin-bottom:24px">
+    <div>
+      <div style="display:flex;gap:14px;align-items:center;margin-bottom:10px">
+        <span class="cs-section-num">&sect; 05</span>
+        <span class="cs-eyebrow">The method</span>
+      </div>
+      <h2 class="cs-display" style="font-size:36px;margin:0;color:var(--ink)">How the call gets made.</h2>
+    </div>
+  </div>
+
+  <div class="cs-how-grid">
+    <div class="cs-how-step">
+      <div class="cs-mono" style="font-size:12px;color:var(--amber);letter-spacing:0.14em;font-weight:600;margin-bottom:12px">01</div>
+      <h4 class="cs-display" style="font-size:28px;margin:0 0 10px;color:var(--ink);line-height:1.0">Geocode</h4>
+      <p style="font-size:13px;color:var(--ink-2);margin:0;line-height:1.5">Resolve ZIP, town, or coordinates to a precise field point.</p>
+    </div>
+    <div class="cs-how-step">
+      <div class="cs-mono" style="font-size:12px;color:var(--amber);letter-spacing:0.14em;font-weight:600;margin-bottom:12px">02</div>
+      <h4 class="cs-display" style="font-size:28px;margin:0 0 10px;color:var(--ink);line-height:1.0">Forecast</h4>
+      <p style="font-size:13px;color:var(--ink-2);margin:0;line-height:1.5">Pull Open-Meteo hourly + 30-day archive, cross-check NWS.</p>
+    </div>
+    <div class="cs-how-step">
+      <div class="cs-mono" style="font-size:12px;color:var(--amber);letter-spacing:0.14em;font-weight:600;margin-bottom:12px">03</div>
+      <h4 class="cs-display" style="font-size:28px;margin:0 0 10px;color:var(--ink);line-height:1.0">Soil</h4>
+      <p style="font-size:13px;color:var(--ink-2);margin:0;line-height:1.5">Read USDA SSURGO: drainage, hydrologic group, texture, OM.</p>
+    </div>
+    <div class="cs-how-step">
+      <div class="cs-mono" style="font-size:12px;color:var(--amber);letter-spacing:0.14em;font-weight:600;margin-bottom:12px">04</div>
+      <h4 class="cs-display" style="font-size:28px;margin:0 0 10px;color:var(--ink);line-height:1.0">Risk</h4>
+      <p style="font-size:13px;color:var(--ink-2);margin:0;line-height:1.5">Score 22 evaluators &mdash; chilling, frost, Pythium, SCM, wireworm&hellip;</p>
+    </div>
+    <div class="cs-how-step">
+      <div class="cs-mono" style="font-size:12px;color:var(--amber);letter-spacing:0.14em;font-weight:600;margin-bottom:12px">05</div>
+      <h4 class="cs-display" style="font-size:28px;margin:0 0 10px;color:var(--ink);line-height:1.0">Verdict</h4>
+      <p style="font-size:13px;color:var(--ink-2);margin:0;line-height:1.5">Aggregate to one survival % and a plain-English call.</p>
+    </div>
+  </div>
+</section>
+
+{# ═══════════════════════════════════════════════════════════════════
+   SAVED FIELDS + TESTIMONIAL
+   ═══════════════════════════════════════════════════════════════ #}
+<section style="padding:32px 32px 56px;background:var(--paper)">
+  <article style="max-width:680px">
+    <span class="cs-section-num">&sect; 06 &mdash; FROM THE FIELD</span>
+    <blockquote style="margin:20px 0 0;padding:0">
+      <p class="cs-display" style="font-size:36px;line-height:1.18;color:var(--ink);margin:0">
+        &ldquo;I avoided planting into a frost pocket and saved roughly <em>$48 an acre on 80 acres</em>. Sentry flagged the 36&deg; soil temp I would have missed.&rdquo;
+      </p>
+      <footer style="margin-top:20px">
+        <div style="font-weight:500;font-size:14px">L. Brinkmeyer</div>
+        <div class="cs-mono" style="font-size:11px;color:var(--ink-3);letter-spacing:0.06em">CORN GROWER &middot; DECKER, MI &middot; 2026</div>
+      </footer>
+    </blockquote>
+  </article>
+</section>
+
+{# ═══════════════════════════════════════════════════════════════════
+   TRUST / SOURCES
+   ═══════════════════════════════════════════════════════════════ #}
+<section style="padding:32px 32px;background:var(--paper)">
+  <div class="cs-eyebrow" style="margin-bottom:14px">Powered by trusted public data &mdash; no scraping, no proxies</div>
+  <hr class="cs-rule-strong" />
+  <div class="cs-trust-grid">
+    <div class="cs-trust-item">
+      <div class="cs-display" style="font-size:22px;color:var(--ink);line-height:1.1">USDA SSURGO</div>
+      <div class="cs-mono" style="font-size:10.5px;color:var(--ink-3);letter-spacing:0.08em;margin-top:6px;text-transform:uppercase">Soil survey &middot; drainage &middot; texture</div>
+    </div>
+    <div class="cs-trust-item">
+      <div class="cs-display" style="font-size:22px;color:var(--ink);line-height:1.1">NOAA / NWS</div>
+      <div class="cs-mono" style="font-size:10.5px;color:var(--ink-3);letter-spacing:0.08em;margin-top:6px;text-transform:uppercase">Forecast &middot; alerts &middot; point xref</div>
+    </div>
+    <div class="cs-trust-item">
+      <div class="cs-display" style="font-size:22px;color:var(--ink);line-height:1.1">NASA POWER</div>
+      <div class="cs-mono" style="font-size:10.5px;color:var(--ink-3);letter-spacing:0.08em;margin-top:6px;text-transform:uppercase">30-yr reanalysis cross-check</div>
+    </div>
+    <div class="cs-trust-item">
+      <div class="cs-display" style="font-size:22px;color:var(--ink);line-height:1.1">Open-Meteo</div>
+      <div class="cs-mono" style="font-size:10.5px;color:var(--ink-3);letter-spacing:0.08em;margin-top:6px;text-transform:uppercase">Hourly + 31-day archive</div>
+    </div>
+    <div class="cs-trust-item" style="border-right:none">
+      <div class="cs-display" style="font-size:22px;color:var(--ink);line-height:1.1">ISU ICM</div>
+      <div class="cs-mono" style="font-size:10.5px;color:var(--ink-3);letter-spacing:0.08em;margin-top:6px;text-transform:uppercase">Pest biofix &middot; GDD models</div>
+    </div>
+  </div>
+  <hr class="cs-rule-strong" />
+</section>
+
+{# ═══════════════════════════════════════════════════════════════════
+   SUBSCRIBE — dark band
+   ═══════════════════════════════════════════════════════════════ #}
+<section style="background:var(--paper);padding:48px 32px">
+  <div class="cs-subscribe-band">
+    <svg viewBox="0 0 600 300" preserveAspectRatio="none" class="cs-subscribe-topo">
+      <g stroke="var(--amber-2)" stroke-width="1" fill="none">
+        <path d="M0,30 Q 200,10 400,40 T 600,20" />
+        <path d="M0,80 Q 200,60 400,90 T 600,70" />
+        <path d="M0,140 Q 200,120 400,150 T 600,130" />
+        <path d="M0,210 Q 200,190 400,220 T 600,200" />
+      </g>
+    </svg>
+    <div style="position:relative">
+      <span class="cs-mono" style="font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:var(--amber-2)">&sect; 07 &mdash; THE DAILY DISPATCH</span>
+      <h3 class="cs-display" style="font-size:clamp(32px,3.6vw,54px);margin:12px 0 0;color:var(--soil-paper);line-height:0.98;max-width:600px">
+        The bulletin, in your inbox &mdash;<br>at <em style="color:var(--amber-2)">4:30 a.m. sharp.</em>
+      </h3>
+      <p style="font-size:14px;color:rgba(232,221,193,0.7);margin-top:16px;margin-bottom:0;max-width:540px;line-height:1.5">
+        Frost warnings, optimal windows, and pest GDD thresholds &mdash; for your saved fields, every morning during planting.
+      </p>
+    </div>
+    <form id="subscribeForm" class="cs-subscribe-form" style="position:relative">
+      <input id="subscribeEmail" type="email" class="cs-input" placeholder="you@farm.email" required
+             style="border-color:var(--soil-paper);color:var(--soil-paper);min-width:280px;background:transparent" aria-label="Email address" />
+      <button type="submit" class="cs-btn-primary" style="background:var(--amber);color:var(--ink)">
+        Subscribe
+        <span class="cs-arrow">&rarr;</span>
+      </button>
+    </form>
+    <p id="subscribeMsg" class="subscribe-msg" hidden></p>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/index.js?v=6"></script>
+{% endblock %}

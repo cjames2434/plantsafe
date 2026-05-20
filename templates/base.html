@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="{% block meta_description %}Free planting risk assessment for corn and soybeans. Real-time weather, soil, and pest data — know before you plant.{% endblock %}" />
+  <title>{% block title %}Crop Sentry — Daily Planting Intelligence{% endblock %}</title>
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Crop Sentry" />
+  <meta property="og:title" content="{% block og_title %}Crop Sentry — Daily planting intelligence{% endblock %}" />
+  <meta property="og:description" content="{% block og_description %}Free, real-time planting risk scores for corn and soybeans. Powered by USDA, NOAA, and NASA data.{% endblock %}" />
+  <meta property="og:url" content="{% block og_url %}https://cropsentry.app{% endblock %}" />
+  <meta property="og:image" content="{% block og_image %}https://cropsentry.app/static/img/og-card.png{% endblock %}" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Crop Sentry — Daily planting intelligence" />
+  <meta name="twitter:description" content="Free planting risk scores for corn &amp; soybeans. USDA + NOAA + NASA data." />
+  <meta name="twitter:image" content="https://cropsentry.app/static/img/og-card.png" />
+
+  <meta name="theme-color" content="#c08a2a" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/static/img/icon-192.png" />
+  <link rel="apple-touch-icon" href="/static/img/icon-192.png" />
+  <link rel="manifest" href="/static/manifest.json" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Crop Sentry" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/geist@1/dist/font/css/geist-sans.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/style.css?v=6" />
+  {% block head_extra %}{% endblock %}
+</head>
+<body>
+  <!-- Bulletin bar — editorial dateline -->
+  <div class="bulletin-bar">
+    <span>BULLETIN №{{ bulletin_number | default('2026-138') }}</span>
+    <span>{{ bulletin_date | default('SUN · 18 MAY 2026') }}</span>
+    <span>DAILY PLANTING INTELLIGENCE</span>
+  </div>
+
+  <!-- Top bar — brand + nav + weather -->
+  <header class="topbar">
+    <a href="/" class="brand">
+      <img src="/static/img/icon-192.png" alt="" width="44" height="44" class="brand-mark" />
+      <span class="brand-text">Crop<span class="brand-dot">·</span>Sentry</span>
+    </a>
+    <nav class="topnav" aria-label="Main navigation">
+      <a href="/" class="{% if active == 'home' %}active{% endif %}">Dashboard</a>
+      <a href="/map" class="{% if active == 'map' %}active{% endif %}">Map</a>
+      <a href="/methodology" class="{% if active == 'methodology' %}active{% endif %}">Methodology</a>
+      <a href="/blog" class="{% if active == 'blog' %}active{% endif %}">Field Notes</a>
+      <a href="/faq" class="{% if active == 'faq' %}active{% endif %}">FAQ</a>
+    </nav>
+    <div class="topbar-right">
+      <span class="topbar-weather cs-mono" id="topbarWeather"></span>
+      <button class="cs-btn-ghost topbar-signin" onclick="location.href='/login'">Sign in</button>
+    </div>
+  </header>
+
+  <main class="main">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="footer-brand-mark">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <rect x="2.5" y="2.5" width="19" height="19" stroke="currentColor" stroke-width="1.5" />
+            <line x1="7" y1="17" x2="7" y2="11" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" />
+            <line x1="12" y1="17" x2="12" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" />
+            <line x1="17" y1="17" x2="17" y2="13" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" />
+            <line x1="5" y1="17.6" x2="19" y2="17.6" stroke="currentColor" stroke-width="1.5" />
+          </svg>
+          <span class="brand-text" style="font-size:14px">Crop<span class="brand-dot">·</span>Sentry</span>
+        </div>
+        <p class="footer-disclaimer">
+          Decision support, not professional advice. Verify with a local agronomist before acting.
+        </p>
+      </div>
+      <div class="footer-links">
+        <div class="footer-col">
+          <div class="cs-eyebrow">Product</div>
+          <a href="/">Dashboard</a>
+          <a href="/map">Map</a>
+        </div>
+        <div class="footer-col">
+          <div class="cs-eyebrow">Resources</div>
+          <a href="/methodology">Methodology</a>
+          <a href="/blog">Field notes</a>
+          <a href="/faq">FAQ</a>
+        </div>
+        <div class="footer-col">
+          <div class="cs-eyebrow">Legal</div>
+          <a href="/terms">Terms</a>
+          <a href="/privacy">Privacy</a>
+        </div>
+      </div>
+    </div>
+    <hr class="cs-rule" />
+    <div class="footer-bottom">
+      <span>&copy; 2026 CROPSENTRY &middot; <span id="footerLocation">DECKER, MI</span></span>
+      <span>POWERED BY USDA &middot; NOAA &middot; NASA &middot; OPEN-METEO &middot; ISU ICM</span>
+    </div>
+  </footer>
+
+  <!-- Click-wrap consent gate -->
+  <div id="consentGate" class="consent-gate" hidden role="dialog" aria-modal="true"
+       aria-labelledby="consentTitle" aria-describedby="consentBody"
+       data-terms-version="{{ tos_version | default('2026-04-29') }}"
+       data-privacy-version="{{ privacy_version | default('2026-04-29') }}">
+    <div class="consent-card">
+      <h2 id="consentTitle">Before you continue</h2>
+      <div id="consentBody" class="consent-body">
+        <p><strong>Crop Sentry is decision-support software, not professional advice.</strong>
+           Every output is a heuristic estimate from public data. It is not a guarantee, and field
+           conditions can differ from any model.</p>
+        <p>By continuing you confirm that you have read and accept our
+           <a href="/terms" target="_blank" rel="noopener">Terms of Service</a> and
+           <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>, and that you are
+           solely responsible for any planting, financial, or operational decisions you make.</p>
+        <label class="consent-check">
+          <input type="checkbox" id="consentCheck" />
+          <span>I have read and accept the <a href="/terms" target="_blank" rel="noopener">Terms</a> and <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</span>
+        </label>
+      </div>
+      <div class="consent-actions">
+        <a href="about:blank" id="consentDecline" class="cs-btn-ghost"
+           rel="noopener">Decline &amp; leave</a>
+        <button type="button" id="consentAccept" class="cs-btn-primary" disabled>Accept &amp; continue</button>
+      </div>
+      <p id="consentError" class="error" hidden></p>
+    </div>
+  </div>
+
+  <script src="/static/js/app.js"></script>
+  <script src="/static/js/consent.js"></script>
+  <script>fetch('/api/pageview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:location.pathname})}).catch(function(){})</script>
+  {% block scripts %}{% endblock %}
+  <script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/static/sw.js').catch(function(){})}</script>
+</body>
+</html>

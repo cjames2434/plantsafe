@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Something went wrong — Crop Sentry{% endblock %}
+
+{% block content %}
+<section class="error-page">
+  <h1>500</h1>
+  <p>Something went wrong on our end. Please try again in a moment.</p>
+  <p class="muted small">If this keeps happening, try clearing your browser cache or checking back later.</p>
+  <div style="margin-top:16px; display:flex; gap:10px;">
+    <a href="/" class="btn primary">Dashboard</a>
+    <a href="/api/health" class="btn ghost">System status</a>
+  </div>
+</section>
+{% endblock %}

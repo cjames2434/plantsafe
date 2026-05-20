@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Methodology · Crop Sentry{% endblock %}
+
+{% block content %}
+<a href="/" class="backlink">&larr; Back</a>
+
+<section class="meth-hero panel">
+  <h1>Methodology</h1>
+  <p class="meth-lede">
+    How Crop Sentry scores planting conditions: the survival-probability math,
+    every input that feeds it, and the reasoning behind each of the {{ methodology.risks|length }}
+    risk evaluators.
+  </p>
+</section>
+
+<section class="meth-toc panel">
+  <h2>Risk evaluators</h2>
+  <ul class="meth-toc-grid">
+    {% for r in methodology.risks %}
+    <li><a href="#{{ r.key }}">{{ r.name }}</a></li>
+    {% endfor %}
+  </ul>
+</section>
+
+<section class="meth-overview panel" id="survival">
+  <header class="panel-head">
+    <h2>How survival probability is calculated</h2>
+  </header>
+  <p class="meth-summary">{{ methodology.survival.summary }}</p>
+
+  <h3 class="meth-h3">The math</h3>
+  <p>{{ methodology.survival.math }}</p>
+  <table class="meth-table">
+    <thead><tr><th>Level</th><th>Survival factor</th></tr></thead>
+    <tbody>
+      {% for level, factor in methodology.level_survival_factor.items() %}
+      <tr><td><span class="meth-pill" data-level="{{ level }}">{{ level }}</span></td><td>{{ '%.2f'|format(factor) }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h3 class="meth-h3">The {{ methodology.survival_pct_cap }}% ceiling</h3>
+  <p>{{ methodology.survival.cap }}</p>
+
+  <h3 class="meth-h3">The interval</h3>
+  <p>{{ methodology.survival.interval }}</p>
+
+  <h3 class="meth-h3">What the published number means</h3>
+  <table class="meth-table">
+    <thead><tr><th>Range</th><th>Read it as</th></tr></thead>
+    <tbody>
+      {% for band, meaning in methodology.survival.what_high_means %}
+      <tr><td><strong>{{ band }}</strong></td><td>{{ meaning }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+{% for r in methodology.risks %}
+<section class="meth-risk panel" id="{{ r.key }}">
+  <header class="panel-head">
+    <h2>{{ r.name }}</h2>
+    <a href="#survival" class="muted small">↑ back to survival math</a>
+  </header>
+  <p class="meth-summary">{{ r.summary }}</p>
+
+  <h3 class="meth-h3">Levels</h3>
+  <table class="meth-table">
+    <thead><tr><th>Level</th><th>Criteria</th></tr></thead>
+    <tbody>
+      {% for level, criteria in r.thresholds %}
+      <tr>
+        <td><span class="meth-pill" data-level="{{ level }}">{{ level }}</span></td>
+        <td>{{ criteria }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="meth-grid">
+    <div>
+      <h3 class="meth-h3">Inputs</h3>
+      <ul>{% for i in r.inputs %}<li>{{ i }}</li>{% endfor %}</ul>
+    </div>
+    <div>
+      <h3 class="meth-h3">References</h3>
+      <ul>{% for ref in r.references %}<li>{{ ref }}</li>{% endfor %}</ul>
+    </div>
+  </div>
+
+  <h3 class="meth-h3">What you can do</h3>
+  <ul>{% for lever in r.operator_levers %}<li>{{ lever }}</li>{% endfor %}</ul>
+</section>
+{% endfor %}
+{% endblock %}

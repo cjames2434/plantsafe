@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Blog — Crop Sentry{% endblock %}
+{% block meta_description %}Seasonal planting outlooks, agronomic tips, and product updates from Crop Sentry.{% endblock %}
+{% block og_title %}Crop Sentry Blog{% endblock %}
+
+{% block content %}
+<section class="legal-hero">
+  <h1>Blog</h1>
+  <p class="muted">Seasonal outlooks, agronomic insights, and Crop Sentry updates.</p>
+</section>
+
+<section class="blog-grid">
+  {% for post in posts %}
+  <article class="blog-card" id="{{ post.slug }}">
+    <div class="blog-meta">
+      <time class="muted small">{{ post.date }}</time>
+      {% if post.tag %}<span class="blog-tag">{{ post.tag }}</span>{% endif %}
+    </div>
+    <h2><a href="#{{ post.slug }}">{{ post.title }}</a></h2>
+    <div class="blog-body">{{ post.body | safe }}</div>
+  </article>
+  {% endfor %}
+</section>
+{% endblock %}

@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}FAQ — Crop Sentry{% endblock %}
+{% block meta_description %}Frequently asked questions about Crop Sentry: how it works, data sources, accuracy, pricing, and more.{% endblock %}
+{% block og_title %}Crop Sentry FAQ{% endblock %}
+
+{% block content %}
+<section class="legal-hero">
+  <h1>Frequently Asked Questions</h1>
+  <p class="muted">Everything you need to know about Crop Sentry.</p>
+</section>
+
+<section class="faq-list">
+  <details class="faq-item" open>
+    <summary class="faq-q">What is Crop Sentry?</summary>
+    <div class="faq-a">
+      <p>Crop Sentry is a free decision-support tool that scores planting risk for corn and soybeans.
+        It pulls real-time weather forecasts, soil survey data, and pest biofix reports to evaluate
+        14 separate risk factors — from imbibitional chilling to seedcorn maggot pressure — and
+        gives you a single recommendation: <em>Optimal</em>, <em>Wait &amp; Watch</em>, or <em>Do Not Plant</em>.</p>
+    </div>
+  </details>
+
+  <details class="faq-item">
+    <summary class="faq-q">Is Crop Sentry free?</summary>
+    <div class="faq-a">
+      <p>Yes. Crop Sentry is completely free. All data comes from public government sources
+        (USDA, NOAA/NWS, NASA POWER, ISU ICM) and the open-source Open-Meteo API.
+        No credit card or account is required.</p>
+    </div>
+  </details>
+
+  <details class="faq-item">
+    <summary class="faq-q">Where does the data come from?</summary>
+    <div class="faq-a">
+      <p>Every assessment pulls from multiple authoritative sources:</p>
+      <ul>
+        <li><strong>USDA SSURGO</strong> — Soil drainage class, hydrologic group, texture, and organic matter</li>
+        <li><strong>NOAA / National Weather Service</strong> — Grid-point forecasts and active weather alerts (frost, flood, severe)</li>
+        <li><strong>NASA POWER (MERRA-2)</strong> — Reanalysis data for 3-source cross-checking</li>
+        <li><strong>Open-Meteo</strong> — Hourly forecast, 30-day archive, and multi-model ensemble uncertainty</li>
+        <li><strong>ISU ICM</strong> — Black cutworm pheromone-trap network for GDD biofix modeling</li>
+        <li><strong>USDM</strong> — US Drought Monitor intensity data</li>
+      </ul>
+      <p>Sources are surfaced on every results page so you can see exactly what informed the recommendation.</p>
+    </div>
+  </details>
+
+  <details class="faq-item">
+    <summary class="faq-q">How accurate is it?</summary>
+    <div class="faq-a">
+      <p>Crop Sentry cross-checks every forecast against at least two independent sources (NWS and NASA POWER)
+        to catch model drift. The survival percentage includes a confidence interval derived from
+        multi-model ensemble dispersion (GFS, ICON, ECMWF, GEM).</p>
+      <p>That said, Crop Sentry is <strong>decision support, not professional advice</strong>. Field conditions
+        can vary from any model — we always recommend verifying with a local agronomist or extension agent
+        before making final planting decisions.</p>
+    </div>
+  </details>
+
+  <details class="faq-item">
+    <summary class="faq-q">What risk factors are evaluated?</summary>
+    <div class="faq-a">
+      <p>Crop Sentry scores 14 risk factors grouped into 6 independent hazard categories:</p>
+      <ul>
+        <li><strong>Weather stress</strong> — Imbibitional chilling, frost, flooding/waterlogging, soil crusting</li>
+        <li><strong>Diseases</strong> — Pythium (damping-off), Phytophthora (soybean root rot)</li>
+        <li><strong>Insects</strong> — Seedcorn maggot, wireworm, slugs, black cutworm, bean leaf beetle</li>
+        <li><strong>Soil history</strong> — Antecedent saturation (prior 30-day moisture loading)</li>
+        <li><strong>Topography</strong> — Elevation concavity (water ponding risk)</li>
+        <li><strong>Chemical</strong> — Herbicide carryover from the previous season</li>
+      </ul>
+      <p>See the <a href="/methodology">Methodology</a> page for the full math and thresholds.</p>
+    </div>
+  </details>
+
+  <details class="faq-item">
+    <summary class="faq-q">What areas does Crop Sentry cover?</summary>
+    <div class="faq-a">
+      <p>Crop Sentry works for any location in the continental United States. Enter a ZIP code, town name,
+        or click directly on the <a href="/map">interactive map</a>. Data sources have best coverage
+        in the Midwest Corn Belt, but forecasts and soil data are available nationwide.</p>
+    </div>
+  </details>
+
+  <details class="faq-item">
+    <summary class="faq-q">Does selecting a seed brand change the results?</summary>
+    <div class="faq-a">
+      <p>Yes. When you pick a specific cultivar from the seed catalog, Crop Sentry adjusts the
+        soil-temperature floor, frost threshold, and pathogen evaluators based on that hybrid's
+        published trait class — emergence score, cold tolerance, and maturity group. This can
+        shift the survival percentage by several points.</p>
+    </div>
+  </details>
+
+  <details class="faq-item">
+    <summary class="faq-q">How do I save and compare fields?</summary>
+    <div class="faq-a">
+      <p>After running an evaluation, tap <strong>Save field</strong> on the results page. Saved fields
+        appear on your Dashboard for quick re-evaluation. You can also drop multiple pins on the
+        <a href="/map">Map</a> page to compare risk scores side by side. All saved data stays
+        in your browser — we don't store it on our servers.</p>
+    </div>
+  </details>
+
+  <details class="faq-item">
+    <summary class="faq-q">Do you sell my data?</summary>
+    <div class="faq-a">
+      <p>No. Crop Sentry does not sell, rent, or share your data with advertisers or data brokers.
+        We collect minimal request metadata (location input, field options) retained for 90 days
+        to improve the service. See the <a href="/privacy">Privacy Policy</a> for full details.</p>
+    </div>
+  </details>
+
+  <details class="faq-item">
+    <summary class="faq-q">Can I use the API directly?</summary>
+    <div class="faq-a">
+      <p>Yes. Crop Sentry exposes a JSON API at <code>/api/evaluate</code> that accepts the same
+        parameters as the web interface. Visit <a href="/docs">/docs</a> for the auto-generated
+        OpenAPI documentation. The API is rate-limited to 30 requests per minute per IP.</p>
+    </div>
+  </details>
+
+  <details class="faq-item">
+    <summary class="faq-q">How can I get in touch?</summary>
+    <div class="faq-a">
+      <p>For questions, feedback, or partnership inquiries, reach us at
+        <strong>cjames2434@gmail.com</strong>. We'd love to hear from you — especially
+        if you have ideas for new risk factors or data sources.</p>
+    </div>
+  </details>
+</section>
+{% endblock %}

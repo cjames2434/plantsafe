@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% block title %}Privacy Policy · Crop Sentry{% endblock %}
+
+{% block content %}
+<a href="/" class="backlink">&larr; Back</a>
+
+<section class="legal-hero panel">
+  <h1>Privacy Policy</h1>
+  <p class="meth-lede">
+    Last updated: <strong>{{ effective_date }}</strong>. This page explains what Crop Sentry collects,
+    why, how long it is kept, and your choices.
+  </p>
+</section>
+
+<section class="panel legal-panel" id="summary">
+  <h2>Plain-language summary</h2>
+  <ul>
+    <li>We collect the location you ask us to evaluate (ZIP, town, or coordinates), the crop and field
+        options you choose, basic technical metadata about your request, and a record that you accepted
+        our Terms.</li>
+    <li>We do <strong>not</strong> sell or rent your data, and we do not run advertising trackers.</li>
+    <li>Saved fields and theme settings live in your browser&rsquo;s local storage on your device, not on
+        our servers.</li>
+    <li>We share data only with the third-party providers needed to run the service (forecast, soil,
+        geocoding, hosting, payments).</li>
+  </ul>
+</section>
+
+<section class="panel legal-panel" id="collected">
+  <h2>1. What we collect</h2>
+
+  <h3 class="meth-h3">a. Information you provide</h3>
+  <ul>
+    <li><strong>Location input</strong> — ZIP code, town name, or latitude/longitude you enter or click
+        on the map. Locations resolve to coordinates we send to weather, soil, and geocoding providers.</li>
+    <li><strong>Field options</strong> — crop, tillage, residue cover, manure, prior grass, residual
+        herbicide, and similar inputs.</li>
+    <li><strong>Account information (paid tiers, when offered)</strong> — name, email, billing details
+        handled by our payment processor.</li>
+    <li><strong>Support correspondence</strong> — anything you send us by email or contact form.</li>
+  </ul>
+
+  <h3 class="meth-h3">b. Information collected automatically</h3>
+  <ul>
+    <li><strong>Request metadata</strong> — IP address, user-agent string, timestamps, and request paths,
+        used for security, abuse prevention, debugging, and aggregate analytics.</li>
+    <li><strong>Acknowledgment record</strong> — when you accept the Terms, we log the timestamp,
+        the version of the Terms accepted, and a truncated/hashed form of your IP for evidentiary
+        purposes (so we can show that consent occurred).</li>
+    <li><strong>Cookies / local storage</strong> — see section&nbsp;5.</li>
+  </ul>
+
+  <h3 class="meth-h3">c. Information we do <em>not</em> collect</h3>
+  <ul>
+    <li>We do not collect government IDs, financial-account numbers (handled by our processor), or
+        biometric data.</li>
+    <li>We do not run third-party advertising trackers or behavioral-ad pixels.</li>
+  </ul>
+</section>
+
+<section class="panel legal-panel" id="purpose">
+  <h2>2. How we use information</h2>
+  <ul>
+    <li>to operate the service (resolve a location, fetch forecast and soil data, score risk);</li>
+    <li>to improve the model — only on de-identified or aggregated query metadata (e.g., counts of
+        evaluations by region, error rates by data source);</li>
+    <li>to keep the service secure and prevent abuse, including rate-limiting and fraud detection;</li>
+    <li>to communicate with you about service changes, paid features, or support requests you initiate;</li>
+    <li>to comply with applicable law and respond to lawful requests.</li>
+  </ul>
+  <p>
+    We do not use the contents of your queries or saved fields to train third-party AI models or to
+    profile you for advertising.
+  </p>
+</section>
+
+<section class="panel legal-panel" id="sharing">
+  <h2>3. Who we share with</h2>
+  <p>We share information only with the following categories of recipients, and only as needed to operate
+     the service:</p>
+  <ul>
+    <li><strong>Weather and agronomic data providers</strong> — including Open-Meteo, NWS api.weather.gov,
+        NASA POWER, USDA SSURGO/NRCS, the U.S. Drought Monitor, Iowa State University ICM, and similar
+        public sources. Coordinates and the request itself are sent to these providers; they receive only
+        what is necessary to return data for that point.</li>
+    <li><strong>Geocoding</strong> — to convert ZIPs and place names into coordinates and back.</li>
+    <li><strong>Hosting and infrastructure providers</strong> — for serving the website and API.</li>
+    <li><strong>Payment processor (paid tiers)</strong> — for subscription and billing. We do not store
+        full card numbers; the processor handles those directly.</li>
+    <li><strong>Legal compliance</strong> — when required by law, court order, or to protect rights and
+        safety.</li>
+    <li><strong>Successors</strong> — in connection with a merger, acquisition, or sale of assets, in
+        which case the acquirer must honor commitments at least as protective as this policy.</li>
+  </ul>
+  <p>We do not sell or rent personal information.</p>
+</section>
+
+<section class="panel legal-panel" id="retention">
+  <h2>4. How long we keep information</h2>
+  <ul>
+    <li><strong>Server logs</strong> — typically up to 90 days, then deleted or aggregated.</li>
+    <li><strong>Acknowledgment records</strong> — retained for the duration of the limitations period in
+        any jurisdiction in which a claim could plausibly be brought (generally up to seven years), so
+        that we can demonstrate you accepted the Terms.</li>
+    <li><strong>Account and billing records (paid tiers)</strong> — retained for the life of the account
+        plus the period required by tax and accounting law.</li>
+    <li><strong>Saved fields and theme</strong> — stored locally in your browser; you can clear them at
+        any time from the dashboard or your browser settings.</li>
+  </ul>
+</section>
+
+<section class="panel legal-panel" id="cookies">
+  <h2>5. Cookies and local storage</h2>
+  <p>Crop Sentry uses a small number of strictly-necessary client-side stores:</p>
+  <ul>
+    <li><code>cropsentry.theme</code> — remembers light/dark preference.</li>
+    <li><code>cropsentry.savedFields</code> — your saved field shortcuts on the dashboard.</li>
+    <li><code>cropsentry.tosAccepted</code> — records that you accepted the Terms so we don&rsquo;t prompt
+        again.</li>
+  </ul>
+  <p>
+    These are stored in your browser, not on our servers, and they do not contain personal identifiers
+    beyond what you typed. We do not use third-party advertising cookies.
+  </p>
+</section>
+
+<section class="panel legal-panel" id="rights">
+  <h2>6. Your choices and rights</h2>
+  <p>Depending on where you live, you may have the right to:</p>
+  <ul>
+    <li>access the personal information we hold about you;</li>
+    <li>request correction or deletion;</li>
+    <li>object to or restrict certain processing;</li>
+    <li>request a portable copy;</li>
+    <li>withdraw consent at any time (where we relied on consent);</li>
+    <li>lodge a complaint with your local data-protection authority.</li>
+  </ul>
+  <p>
+    California residents have specific rights under the CCPA/CPRA, including the right to know,
+    delete, and limit use of sensitive information. Residents of the EEA, U.K., and Switzerland have
+    rights under the GDPR. To exercise any right, contact us at the address in section&nbsp;10.
+  </p>
+</section>
+
+<section class="panel legal-panel" id="security">
+  <h2>7. Security</h2>
+  <p>
+    We use reasonable administrative, technical, and physical safeguards to protect information,
+    including TLS in transit and access controls. No system is perfectly secure, and we cannot
+    guarantee that information will never be accessed without authorization.
+  </p>
+</section>
+
+<section class="panel legal-panel" id="children">
+  <h2>8. Children</h2>
+  <p>
+    The service is intended for users 18 and older. We do not knowingly collect personal information
+    from children under 13 (or under 16 in jurisdictions where that threshold applies). If you believe
+    a child has provided us with personal information, contact us and we will delete it.
+  </p>
+</section>
+
+<section class="panel legal-panel" id="international">
+  <h2>9. International transfers</h2>
+  <p>
+    Crop Sentry is operated from the United States. If you access the service from outside the U.S.,
+    your information will be transferred to, stored, and processed in the U.S. and other countries
+    where our providers operate. We rely on appropriate safeguards for international transfers where
+    required by law.
+  </p>
+</section>
+
+<section class="panel legal-panel" id="contact">
+  <h2>10. Contact</h2>
+  <p>
+    For privacy questions, deletion requests, or any of the rights described above, please email
+    <a href="mailto:cjames2434@gmail.com">cjames2434@gmail.com</a>.
+  </p>
+</section>
+
+<section class="panel legal-panel" id="changes">
+  <h2>11. Changes to this policy</h2>
+  <p>
+    We may update this Privacy Policy from time to time. The &ldquo;Last updated&rdquo; date at the
+    top reflects the most recent revision. Material changes will be highlighted on the dashboard or by
+    email if you have an account.
+  </p>
+</section>
+
+<section class="panel legal-panel legal-footnote">
+  <p class="muted small">
+    This Privacy Policy is provided as a starting point and does not constitute legal advice. Have it
+    reviewed by counsel familiar with your jurisdictions and the privacy laws (GDPR, CCPA/CPRA, etc.)
+    that apply to your business before launch.
+  </p>
+</section>
+{% endblock %}
